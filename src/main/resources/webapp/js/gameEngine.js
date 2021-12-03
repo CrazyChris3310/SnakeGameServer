@@ -5,7 +5,7 @@ class NetworkGameEngine {
     }
 
     startGame() {
-        this.socket = new WebSocket("ws://" + window.location.host + "/games/snake/game?colorId=" + this.color);
+        this.socket = new WebSocket("wss://" + window.location.host + "/games/snake/game?colorId=" + this.color);
     
         this.socket.onopen = () => (console.log("Connection is set!"));
         this.socket.onclose = (event) => {
