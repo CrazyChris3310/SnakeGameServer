@@ -1,0 +1,5 @@
+target/*
+!target/ktor-sample-0.0.1-jar-with-dependencies.jar
+
+*.iml
+.idea
