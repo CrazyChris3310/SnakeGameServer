@@ -1,0 +1,1 @@
+web: java -jar target/ktor-sample-0.0.1-jar-with-dependencies.jar
