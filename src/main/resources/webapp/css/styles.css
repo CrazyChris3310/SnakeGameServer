@@ -80,9 +80,34 @@ body {
   background-color: #584141;
 }
 
+.menu-row input[type='button'] {
+  margin: 0;
+}
+
+.menu-row input[type='text'] {
+  flex-grow: 2;
+  border: 3px solid #8d6868;
+  outline: none;
+  border-radius: 6px;
+  text-align: center;
+  margin-right: 10px;
+  font-size: large;
+  font-weight: bold;
+  height: 100%;
+  box-sizing: border-box;
+}
+
 #color-chooser {
   height: 100%;
   border: none;
   outline: none;
   flex-grow: 2;
+}
+
+.temp {
+  align-self: flex-start;
+  margin: 20px;
+  font-weight: bold;
+  font-size: large;
+  text-align: center;
 }

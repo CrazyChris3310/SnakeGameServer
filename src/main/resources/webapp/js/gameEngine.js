@@ -4,9 +4,13 @@ class NetworkGameEngine {
         this.color = color.substring(1);
     }
 
-    startGame() {
-        this.socket = new WebSocket("wss://" + window.location.host + "/games/snake/game?colorId=" + this.color);
-    
+    startGame(roomId = "") {
+        let url = "ws://" + window.location.host + "/games/snake/game";
+        if (roomId !== "")
+            url += "/" + roomId;
+        url += "?colorId=" + this.color;
+        this.socket = new WebSocket(url);
+
         this.socket.onopen = () => (console.log("Connection is set!"));
         this.socket.onclose = (event) => {
             if (event.wasClean) {
@@ -18,6 +22,11 @@ class NetworkGameEngine {
         }
     
         this.socket.onmessage = (event) => {
+            let roomId = Number.parseInt(event.data);
+            if  (!isNaN(roomId)) {
+                $('.temp').html('Room ID <br>' + roomId);
+            }
+
             let response = JSON.parse(event.data);
             let points = response.points;
             let ctx = getCanvasContext();

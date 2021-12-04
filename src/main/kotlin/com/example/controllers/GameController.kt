@@ -13,11 +13,12 @@ import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class GameController(private val snakes: MutableSet<Connection>) {
+class GameController {
 
     private val food = Food()
     private var timer = Timer()
     val lock = ReentrantReadWriteLock()
+    private val snakes = Collections.synchronizedSet<Connection?>(HashSet())
 
     suspend fun startGame() {
         if (snakes.isNotEmpty())
@@ -43,9 +44,12 @@ class GameController(private val snakes: MutableSet<Connection>) {
         println("After coroutine scope")
     }
 
-    fun tryStopTimer() {
-        if (snakes.isEmpty())
+    fun tryStopTimer() : Boolean {
+        if (snakes.isEmpty()) {
             timer.cancel()
+            return true
+        }
+        return false
     }
 
     fun addSnake(session: DefaultWebSocketSession, snake: Snake) {

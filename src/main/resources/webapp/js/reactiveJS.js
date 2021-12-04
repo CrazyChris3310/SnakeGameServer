@@ -17,9 +17,7 @@ class Menu {
 
         multiPlayerBtn.on('click', () => {
             this.menu.empty();
-            this.empty = true;
-            this.gameEngine = new NetworkGameEngine(this.currentColor);
-            this.gameEngine.startGame();
+            this.showMultiplayerMenu();
         });
         singlePlayerBtn.on('click', () => {
             this.menu.empty();
@@ -30,6 +28,44 @@ class Menu {
         setBtn.on('click', () => {
             this.menu.empty();
             this.showSettings();
+        });
+    }
+
+    showMultiplayerMenu() {
+        let connectPanel = $('<div class="menu-row">');
+        let roomId = $('<input id="room-id" type="text" class="menu-input" placeholder="123">');
+        let connectButton = $('<input type="button" class="menu-button" value="Connect">');
+        connectPanel.append(roomId).append(connectButton);
+        this.menu.append(connectPanel);
+
+        let createGameBtn = $('<input type="button" class="menu-button" value="Create Game">');
+        this.menu.append(createGameBtn);
+
+        let back = $('<input type="button" class="menu-button" value="Back"/>');
+        this.menu.append(back);
+
+        connectButton.on('click', () => {
+            let roomId = $('#room-id').val();
+            if (roomId == null || roomId === "")
+                return;
+            this.menu.empty();
+            this.empty = true;
+            this.gameEngine = new NetworkGameEngine(this.currentColor);
+            this.gameEngine.startGame(roomId);
+
+        })
+
+        createGameBtn.on('click', () => {
+            this.menu.empty();
+            this.empty = true;
+            this.gameEngine = new NetworkGameEngine(this.currentColor);
+            $('body').append($('<div class="temp">'))
+            this.gameEngine.startGame();
+        })
+
+        back.on('click', () => {
+            this.menu.empty();
+            this.showMenu();
         });
     }
 
@@ -74,6 +110,7 @@ class Menu {
         if (this.empty) {
             this.showMenu();
             this.empty = false;
+            $('.temp').remove();
         }
     }
 

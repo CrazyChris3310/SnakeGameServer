@@ -6,4 +6,4 @@ import java.util.*
 
 data class Request(val direction: Direction)
 
-data class Response(var points: LinkedList<Point>)
+data class Response(var points: List<Point>)
