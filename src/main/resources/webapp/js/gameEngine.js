@@ -25,6 +25,7 @@ class NetworkGameEngine {
             let roomId = Number.parseInt(event.data);
             if  (!isNaN(roomId)) {
                 $('.temp').html('Room ID <br>' + roomId);
+                return;
             }
 
             let response = JSON.parse(event.data);

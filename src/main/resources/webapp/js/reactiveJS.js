@@ -80,7 +80,7 @@ class Menu {
         let freeMapTag = $('<option value="free">No edges</option>');
         let edgesMap = $('<option value="edges">Edges</option>');
         let tunnelMap = $('<option value="tunnel">Tunnel</option>');
-        let apartMap = $('<option value="apartament">Apartament</option>');
+        let apartMap = $('<option value="apartment">Apartment</option>');
         mapSelector.append(freeMapTag).append(edgesMap).append(tunnelMap).append(apartMap);
         mapSelector.val(this.currentMap.name);
         let mapRow = $('<div class="menu-row">');
@@ -125,7 +125,7 @@ function defineMap(name) {
         case 'free': return new FreeMap();
         case 'edges': return new EdgesMap();
         case 'tunnel': return new TunnelMap();
-        case 'apartament': return new ApartamentMap();
+        case 'apartment': return new ApartmentMap();
     }
 }
 

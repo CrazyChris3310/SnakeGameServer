@@ -29,7 +29,7 @@ var maxRoomId = 0
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-fun Application.module() {
+fun Application.snakeModule() {
     install(WebSockets)
     routing {
         static("/games") {
@@ -43,7 +43,8 @@ fun Application.module() {
             var roomId = call.parameters["roomId"]
             val controller: GameController?
             if (roomId == null) {
-                controller = GameController()
+                val mapName = call.request.queryParameters["mapName"]
+                controller = GameController(mapName)
                 rooms.putIfAbsent(maxRoomId.toString(), controller)
                 roomId = maxRoomId.toString()
                 maxRoomId += 1

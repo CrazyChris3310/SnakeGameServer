@@ -36,6 +36,8 @@ class Snake(val color: String, speed: Int) {
 
     fun getSize() = snake.size
 
+    fun getHead() = snake.first()
+
     fun addDirection(dir: Direction) = directionQueue.add(dir)
 
     fun updateDirection() {

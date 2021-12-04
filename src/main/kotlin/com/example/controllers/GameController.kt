@@ -1,5 +1,7 @@
 package com.example.controllers
 
+import com.example.controllers.maps.*
+import com.example.controllers.maps.Map
 import com.example.model.Direction
 import com.example.model.Food
 import com.example.model.Point
@@ -13,12 +15,18 @@ import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class GameController {
+class GameController(mapName: String?) {
 
     private val food = Food()
     private var timer = Timer()
     val lock = ReentrantReadWriteLock()
     private val snakes = Collections.synchronizedSet<Connection?>(HashSet())
+    private val currentMap: Map = when (mapName) {
+        "edges" -> EdgesMap()
+        "tunnel" -> TunnelMap()
+        "apartment" -> ApartmentMap()
+        else -> FreeMap()
+    }
 
     suspend fun startGame() {
         if (snakes.isNotEmpty())
@@ -108,6 +116,11 @@ class GameController {
 
                 if (!fail && it.intersectsItself()) {
                     it.reborn()
+                    fail = true
+                }
+
+                if (!fail && currentMap.isIntersected(it)) {
+                    it.reborn()
                 }
 
                 it.updateDirection()
@@ -119,6 +132,10 @@ class GameController {
             }
         }
         points.add(Point(food.cords, food.color))
+
+        for (point in currentMap.edges) {
+            points.add(Point(point, currentMap.color))
+        }
 
         val response = Response(points)
         broadcast(response)

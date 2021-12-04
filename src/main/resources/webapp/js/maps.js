@@ -30,7 +30,7 @@ class EdgesMap {
             })
         }
 
-        for (let i = ELEMENT_SIZE; i < FIELD_HEIGHT - 1; i += ELEMENT_SIZE) {
+        for (let i = ELEMENT_SIZE; i < FIELD_HEIGHT - ELEMENT_SIZE; i += ELEMENT_SIZE) {
             this.edges.push({
                 x: 0,
                 y: i
@@ -122,7 +122,7 @@ class TunnelMap {
 
 }
 
-class ApartamentMap {
+class ApartmentMap {
     constructor() {
         this.name = 'tunnel';
         this.edges = [];

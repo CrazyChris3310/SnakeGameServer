@@ -20,3 +20,7 @@ fun randomCoordinate(): Pair<Int, Int> {
 }
 
 fun randomDirection(): Direction = Direction.values().random()
+
+fun divideCords(first: Int, second: Int): Int {
+    return first / ELEMENT_SIZE / second * ELEMENT_SIZE
+}
