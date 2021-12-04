@@ -11,8 +11,16 @@ class Food {
         this.cords = randomCoordinate()
     }
 
-    fun newCords() {
-        this.cords = randomCoordinate()
+    fun newCords(edges: List<Pair<Int, Int>> = ArrayList()) {
+        loop@ while (true) {
+            cords = randomCoordinate()
+            for (point in edges) {
+                if (point == cords) {
+                    continue@loop;
+                }
+            }
+            break;
+        }
     }
 
 }

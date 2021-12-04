@@ -1,14 +1,15 @@
 class NetworkGameEngine {
 
-    constructor(color) {
+    constructor(color, mapSelected = "free") {
         this.color = color.substring(1);
+        this.map = mapSelected;
     }
 
     startGame(roomId = "") {
         let url = "ws://" + window.location.host + "/games/snake/game";
         if (roomId !== "")
             url += "/" + roomId;
-        url += "?colorId=" + this.color;
+        url += "?colorId=" + this.color + "&mapName=" + this.map;
         this.socket = new WebSocket(url);
 
         this.socket.onopen = () => (console.log("Connection is set!"));

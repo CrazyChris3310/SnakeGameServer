@@ -33,7 +33,7 @@ class Menu {
 
     showMultiplayerMenu() {
         let connectPanel = $('<div class="menu-row">');
-        let roomId = $('<input id="room-id" type="text" class="menu-input" placeholder="123">');
+        let roomId = $('<input id="room-id" type="text" class="menu-input" placeholder="Room ID">');
         let connectButton = $('<input type="button" class="menu-button" value="Connect">');
         connectPanel.append(roomId).append(connectButton);
         this.menu.append(connectPanel);
@@ -57,16 +57,46 @@ class Menu {
 
         createGameBtn.on('click', () => {
             this.menu.empty();
-            this.empty = true;
-            this.gameEngine = new NetworkGameEngine(this.currentColor);
-            $('body').append($('<div class="temp">'))
-            this.gameEngine.startGame();
+            this.showMultiplayerSettings()
         })
 
         back.on('click', () => {
             this.menu.empty();
             this.showMenu();
         });
+    }
+
+    showMultiplayerSettings() {
+        let mapLabel = $('<label for="map-chooser">Select a map: </label>');
+        let mapSelector = $('<select id="map-chooser">');
+        let freeMapTag = $('<option value="free">No edges</option>');
+        let edgesMap = $('<option value="edges">Edges</option>');
+        let tunnelMap = $('<option value="tunnel">Tunnel</option>');
+        let apartMap = $('<option value="apartment">Apartment</option>');
+        mapSelector.append(freeMapTag).append(edgesMap).append(tunnelMap).append(apartMap);
+        let mapRow = $('<div class="menu-row">');
+        mapRow.append(mapLabel).append(mapSelector);
+
+        let butPanel = $('<div class="final-buttons"></div>');
+        let start = $('<input type="button" class="menu-button" value="Start game"/>');
+        let back = $('<input type="button" class="menu-button" value="Back"/>');
+        butPanel.append(start).append(back);
+
+        this.menu.append(mapRow).append(start).append(back);
+
+        back.on('click', () => {
+            this.menu.empty();
+            this.showMultiplayerMenu()
+        })
+
+        start.on('click', () => {
+            let mapSelected = $('#map-chooser').val();
+            this.menu.empty();
+            this.empty = true;
+            this.gameEngine = new NetworkGameEngine(this.currentColor, mapSelected);
+            $('body').append($('<div class="temp">'))
+            this.gameEngine.startGame();
+        })
     }
 
     showSettings() {

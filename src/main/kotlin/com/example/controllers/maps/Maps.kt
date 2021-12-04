@@ -51,12 +51,12 @@ class TunnelMap: AbstractMap("tunnel") {
             edges.add(Pair(i, 0))
             edges.add(Pair(i, FIELD_HEIGHT - ELEMENT_SIZE))
             edges.add(Pair(FIELD_WIDTH - i - ELEMENT_SIZE, 0))
-            edges.add(Pair(FIELD_WIDTH - i - ELEMENT_SIZE, FIELD_WIDTH - ELEMENT_SIZE))
+            edges.add(Pair(FIELD_WIDTH - i - ELEMENT_SIZE, FIELD_HEIGHT - ELEMENT_SIZE))
         }
         for (i in ELEMENT_SIZE until FIELD_HEIGHT / 4 - ELEMENT_SIZE step ELEMENT_SIZE) {
             edges.add(Pair(0, i))
             edges.add(Pair(FIELD_WIDTH - ELEMENT_SIZE, i))
-            edges.add(Pair(0, FIELD_HEIGHT - ELEMENT_SIZE - 1))
+            edges.add(Pair(0, FIELD_HEIGHT - ELEMENT_SIZE - i))
             edges.add(Pair(FIELD_WIDTH - ELEMENT_SIZE, FIELD_HEIGHT - i - ELEMENT_SIZE))
         }
         val temp = divideCords(FIELD_HEIGHT, 4)
@@ -85,10 +85,10 @@ class ApartmentMap: AbstractMap("apartment") {
         for (i in ELEMENT_SIZE until ELEMENT_SIZE * 15 step ELEMENT_SIZE) {
             edges.add(Pair(0, i))
         }
-        for (i in ELEMENT_SIZE until FIELD_WIDTH / 3 step ELEMENT_SIZE) {
+        for (i in ELEMENT_SIZE until FIELD_HEIGHT / 3 step ELEMENT_SIZE) {
             edges.add(Pair(divideCords(FIELD_WIDTH, 2) - 5 * ELEMENT_SIZE, i))
         }
-        for (i in FIELD_WIDTH - divideCords(FIELD_HEIGHT, 3) + ELEMENT_SIZE until FIELD_HEIGHT step ELEMENT_SIZE) {
+        for (i in FIELD_HEIGHT - divideCords(FIELD_HEIGHT, 3) + ELEMENT_SIZE until FIELD_HEIGHT step ELEMENT_SIZE) {
             edges.add(Pair(FIELD_WIDTH - divideCords(FIELD_WIDTH, 2) + 4 * ELEMENT_SIZE, i))
         }
     }

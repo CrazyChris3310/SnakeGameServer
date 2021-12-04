@@ -94,7 +94,7 @@ class GameController(mapName: String?) {
         if (snakes.isNotEmpty()) {
             snakes.map{ it.snake }.forEach { it ->
                 if (it.intersects(food.cords)) {
-                    food.newCords()
+                    food.newCords(currentMap.edges)
                     it.grow()
                     if (it.speed > 10 && it.getSize() % 10 == 0) {
                         it.speed -= 10
