@@ -6,7 +6,7 @@ class NetworkGameEngine {
     }
 
     startGame(roomId = "") {
-        let url = "ws://" + window.location.host + "/games/snake/game";
+        let url = "wss://" + window.location.host + "/games/snake/game";
         if (roomId !== "")
             url += "/" + roomId;
         url += "?colorId=" + this.color + "&mapName=" + this.map;
