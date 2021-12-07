@@ -1,13 +1,12 @@
 package com.example.model
 
 import com.example.utils.*
-import java.util.*
 
 class Snake(val color: String, speed: Int) {
 
     val snake: MutableList<SnakeElement> = ArrayList()
-    val directionQueue: Queue<Direction> = LinkedList()
-    var count = speed
+    private val directionQueue: MutableList<Direction> = ArrayList()
+    private var count = speed
     var direction: Direction = randomDirection()
     var speed: Int = speed
         set(value) {
@@ -19,7 +18,7 @@ class Snake(val color: String, speed: Int) {
         reborn()
     }
 
-    fun createHead() {
+    private fun createHead() {
         val cords = randomCoordinate()
         val head = SnakeElement(cords, direction)
         snake.add(head)
@@ -42,9 +41,13 @@ class Snake(val color: String, speed: Int) {
 
     fun updateDirection() {
         if (count != speed) return
-        val dir = directionQueue.poll() ?: return
-        if (!direction.isOpposite(dir)) {
-            direction = dir
+        try {
+            val dir = directionQueue.removeAt(0)
+            if (!direction.isOpposite(dir)) {
+                direction = dir
+            }
+        } catch (e: IndexOutOfBoundsException) {
+            return
         }
     }
 

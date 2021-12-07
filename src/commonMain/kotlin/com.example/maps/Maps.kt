@@ -1,4 +1,4 @@
-package com.example.controllers.maps
+package com.example.maps
 
 import com.example.model.Snake
 import com.example.utils.ELEMENT_SIZE

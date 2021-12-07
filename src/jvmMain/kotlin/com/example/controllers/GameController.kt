@@ -1,7 +1,6 @@
 package com.example.controllers
 
-import com.example.controllers.maps.*
-import com.example.controllers.maps.Map
+import com.example.maps.Map
 import com.example.model.Direction
 import com.example.model.Food
 import com.example.model.Point
@@ -22,10 +21,10 @@ class GameController(mapName: String?) {
     val lock = ReentrantReadWriteLock()
     private val snakes = Collections.synchronizedSet<Connection?>(HashSet())
     private val currentMap: Map = when (mapName) {
-        "edges" -> EdgesMap()
-        "tunnel" -> TunnelMap()
-        "apartment" -> ApartmentMap()
-        else -> FreeMap()
+        "edges" -> com.example.maps.EdgesMap()
+        "tunnel" -> com.example.maps.TunnelMap()
+        "apartment" -> com.example.maps.ApartmentMap()
+        else -> com.example.maps.FreeMap()
     }
 
     suspend fun startGame() {
