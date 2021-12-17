@@ -1,10 +1,8 @@
 import kotlinx.browser.document
-import kotlinx.browser.window
-import react.dom.aria.AriaRole
+import react.dom.render
 
 fun main() {
-    document.addEventListener("keydown", {
-        window.alert("Clicked in kotlin!!!");
-    })
-
+   render(document.getElementById("root")) {
+        child(App)
+   }
 }

@@ -6,13 +6,13 @@ import com.example.utils.FIELD_HEIGHT
 import com.example.utils.FIELD_WIDTH
 import com.example.utils.divideCords
 
-interface Map {
+interface GameMap {
     val edges: MutableList<Pair<Int, Int>>
     val color: String
     fun isIntersected(snake: Snake): Boolean
 }
 
-abstract class AbstractMap(val name: String) : Map {
+abstract class AbstractGameMap(val name: String) : GameMap {
     override val edges: MutableList<Pair<Int, Int>> = ArrayList()
     override val color = "000000"
 
@@ -26,11 +26,11 @@ abstract class AbstractMap(val name: String) : Map {
     }
 }
 
-class FreeMap: AbstractMap("free") {
+class FreeMap: AbstractGameMap("free") {
     override fun isIntersected(snake: Snake): Boolean = false
 }
 
-class EdgesMap: AbstractMap("edges") {
+class EdgesMap: AbstractGameMap("edges") {
 
     init {
         for (i in 0 until FIELD_WIDTH step ELEMENT_SIZE) {
@@ -45,7 +45,7 @@ class EdgesMap: AbstractMap("edges") {
     }
 }
 
-class TunnelMap: AbstractMap("tunnel") {
+class TunnelMap: AbstractGameMap("tunnel") {
     init {
         for (i in 0 until FIELD_HEIGHT / 4 step ELEMENT_SIZE) {
             edges.add(Pair(i, 0))
@@ -67,7 +67,7 @@ class TunnelMap: AbstractMap("tunnel") {
     }
 }
 
-class ApartmentMap: AbstractMap("apartment") {
+class ApartmentMap: AbstractGameMap("apartment") {
     init {
         for (i in 0 until FIELD_WIDTH - ELEMENT_SIZE step ELEMENT_SIZE) {
             edges.add(Pair(i, FIELD_HEIGHT - divideCords(FIELD_HEIGHT, 3)))

@@ -92,6 +92,7 @@ kotlin {
         browser {
             binaries.executable()
         }
+        binaries.executable()
     }
     sourceSets {
         val commonMain by getting {
@@ -126,6 +127,8 @@ kotlin {
 
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react:$reactVersion")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:$reactVersion")
+                implementation(npm("react", "17.0.2"))
+                implementation(npm("react-dom", "17.0.2"))
             }
         }
     }

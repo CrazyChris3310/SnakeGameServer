@@ -16,11 +16,18 @@ fun randomCoordinate(): Pair<Int, Int> {
     x -= x % ELEMENT_SIZE
     y -= y % ELEMENT_SIZE
     return Pair(x, y)
-
 }
 
 fun randomDirection(): Direction = Direction.values().random()
 
 fun divideCords(first: Int, second: Int): Int {
     return first / ELEMENT_SIZE / second * ELEMENT_SIZE
+}
+
+fun convertDirection(direction: String): Direction? = when (direction) {
+    "UP" -> Direction.UP
+    "DOWN" -> Direction.DOWN
+    "RIGHT" -> Direction.RIGHT
+    "LEFT" -> Direction.LEFT
+    else -> null
 }

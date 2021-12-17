@@ -6,8 +6,10 @@ import com.example.utils.DEFAULT_SPEED
 import com.example.utils.Request
 import com.google.gson.Gson
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
+import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
 import java.util.*
@@ -20,6 +22,19 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun Application.snakeModule() {
     install(WebSockets)
     routing {
+
+        get("/temp") {
+            call.respondText(
+                this::class.java.classLoader.getResource("webapp/temp.html")!!.readText(),
+                ContentType.Text.Html
+            )
+        }
+
+        static("/") {
+            resources("")
+            resources("webapp")
+        }
+
         static("/games") {
             resources("webapp")
         }
