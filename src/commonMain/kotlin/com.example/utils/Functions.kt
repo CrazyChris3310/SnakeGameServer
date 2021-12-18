@@ -6,7 +6,7 @@ const val FIELD_WIDTH = 1200
 const val FIELD_HEIGHT = 680
 const val ELEMENT_SIZE = 10
 const val TICK_LENGTH = 10L
-const val DEFAULT_SPEED = 40
+const val DEFAULT_SPEED = 50
 
 fun randomInt(min: Int, max: Int): Int = (min until max).random()
 

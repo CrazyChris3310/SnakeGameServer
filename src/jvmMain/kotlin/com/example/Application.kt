@@ -39,6 +39,10 @@ fun Application.snakeModule() {
             resources("webapp")
         }
 
+        static("/snakegame") {
+            resources("newapp")
+        }
+
         val rooms = Collections.synchronizedMap<String, GameController>(HashMap())
 
         webSocket("/games/snake/game/{roomId?}") {

@@ -1,7 +1,10 @@
 import kotlinx.browser.document
 import kotlinx.html.InputType
+import kotlinx.html.div
 import kotlinx.html.id
 import kotlinx.html.js.onClickFunction
+import kotlinx.html.style
+import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLSelectElement
 import org.w3c.dom.events.Event
@@ -10,118 +13,134 @@ import react.*
 import react.dom.*
 import kotlin.jvm.Volatile
 
-val App = fc<Props> {
-    val (color, setColor) = useState(getRandomColor())
-    val (map, setMap) = useState("free")
-    val (panel, setPanel) = useState("mainMenu")
-    var (isPlaying, setPlaying) = useState(false)
-    var gameEngine: GameEngine = SingleGameEngine(color, map)
-//    val (listenerInitialized, setListenerInitialized) = useState(false)
+interface AppState : State {
+    var color: String
+    var map: String
+    var panel: String
+    var gameEngine: GameEngine
+}
 
-    fun updateSettings(color: String, map: String) {
-        setColor(color)
-        setMap(map)
+class Application : RComponent<Props, AppState>() {
+
+    init {
+        state.color = getRandomColor()
+        state.panel = "mainMenu"
+        state.map = "free"
     }
 
-    val isPlayingRef = useRef(isPlaying)
-
-    useEffect {
-        isPlayingRef.current = isPlaying
+    override fun componentDidMount() {
+        document.addEventListener("keydown", ::keyActionListener)
+        (document.querySelector(".game-field-wrapper") as HTMLDivElement).style.borderColor = state.color
     }
 
-    fun keyActionListener(event: Event) {
-        console.log(isPlayingRef.current)
+    override fun componentWillUnmount() {
+        super.componentWillUnmount()
+        document.removeEventListener("keydown", ::keyActionListener)
+    }
+
+    private fun keyActionListener(event: Event) {
         val key = event as KeyboardEvent
-        if (isPlayingRef.current == true) {
+        if (state.panel == "none") {
             when (key.code) {
                 "Escape" -> {
-                    gameEngine.stopGame()
-                    setPlaying(false)
-                    setPanel("mainMenu")
-//                document.removeEventListener("keydown", ::keyActionListener)
+                    state.gameEngine.stopGame()
+                    setState {
+                        panel = "mainMenu"
+                    }
                 }
-                "ArrowUp" -> gameEngine.changeDirection("UP")
-                "ArrowDown" -> gameEngine.changeDirection("DOWN")
-                "ArrowLeft" -> gameEngine.changeDirection("LEFT")
-                "ArrowRight" -> gameEngine.changeDirection("RIGHT")
+                "ArrowUp" -> state.gameEngine.changeDirection("UP")
+                "ArrowDown" -> state.gameEngine.changeDirection("DOWN")
+                "ArrowLeft" -> state.gameEngine.changeDirection("LEFT")
+                "ArrowRight" -> state.gameEngine.changeDirection("RIGHT")
             }
 
         } else {
             when (key.code) {
-                "Escape" -> setPanel("mainMenu")
+                "Escape" -> setState { panel = "mainMenu" }
             }
         }
     }
 
-    useEffectOnce{
-        document.addEventListener("keydown", ::keyActionListener)
+    private fun updateSettings(newColor: String, newMap: String) {
+        setState {
+            map = newMap
+            color = newColor
+            (document.querySelector(".game-field-wrapper") as HTMLDivElement).style.borderColor = color
+        }
     }
 
-    div {
-        div(classes = "game-field-wrapper") {
-            canvas(classes = "game-field") {
-                attrs.width = "1200"
-                attrs.height = "680"
-            }
-        }
-        when (panel) {
-            "mainMenu" -> child(MainMenu) {
-                attrs {
-                    startGame = {
-                        setPanel("empty")
-                        setPlaying(true)
-                        gameEngine = SingleGameEngine(color, map)
-                        gameEngine.startGame()
-                        console.log("game started")
-//                        document.addEventListener("keydown", ::keyActionListener)
-                    }
-                    showMultiplayerMenu = { setPanel("multiplayerMenu") }
-                    showSettings = { setPanel("settings") }
+    override fun RBuilder.render() {
+        div {
+            div(classes = "game-field-wrapper") {
+                canvas(classes = "game-field") {
+                    attrs.width = "1200"
+                    attrs.height = "680"
                 }
             }
-            "settings" -> child(Settings) {
-                attrs.color = color
-                attrs.map = map
-                attrs.save = ::updateSettings
-                attrs.back = { setPanel("mainMenu") }
-            }
-            "multiplayerMenu" -> child(MultiplayerMenu) {
-                attrs {
-                    connectToGame = { roomId ->
-                        setPanel("empty")
-                        setPlaying(true)
-                        gameEngine = NetworkGameEngine(color, map, roomId)
-                        gameEngine.startGame()
-                    }
-                    showMultiplayerSettings = { setPanel("multiplayerSettings") }
-                    back = { setPanel("mainMenu") }
-                }
-            }
-            "multiplayerSettings" -> child(MultiplayerSettings) {
-                attrs {
-                    startGame = {
-                        setPanel("empty")
-                        setPlaying(true)
-                        gameEngine = NetworkGameEngine(color, map)
-                        gameEngine.startGame()
-                    }
-                    back = { setPanel("multiplayerMenu") }
-                }
-            }
-            "empty" -> div {}
-        }
+            when (state.panel) {
+                "mainMenu" -> child(MainMenu) {
+                    attrs {
+                        startGame = {
+                            setState {
+                                map = state.map
+                                panel = "none"
+                                gameEngine = SingleGameEngine(color, map)
+                                color = state.color
 
+                                gameEngine.startGame()
+                            }
+                        }
+                        showMultiplayerMenu = { setState { panel = "multiplayerMenu" } }
+                        showSettings = { setState { panel = "settings" } }
+                    }
+                }
+                "settings" -> child(Settings) {
+                    attrs.color = state.color
+                    attrs.map = state.map
+                    attrs.save = ::updateSettings
+                    attrs.back = { setState { panel = "mainMenu" } }
+                }
+                "multiplayerMenu" -> child(MultiplayerMenu) {
+                    attrs {
+                        connectToGame = { roomId ->
+                            setState {
+                                panel = "none"
+                                gameEngine = NetworkGameEngine(color, map, roomId)
+
+                                state.gameEngine.startGame()
+                            }
+                        }
+                        showMultiplayerSettings = { setState { panel = "multiplayerSettings" } }
+                        back = { setState { panel = "mainMenu" } }
+                    }
+                }
+                "multiplayerSettings" -> child(MultiplayerSettings) {
+                    attrs {
+                        startGame = {
+                            setState {
+                                panel = "none"
+                                gameEngine = SingleGameEngine(color, map)
+
+                                state.gameEngine.startGame()
+                            }
+                        }
+                        back = { setState { panel = "multiplayerMenu" } }
+                    }
+                }
+                "none" -> div {}
+            }
+
+        }
     }
+
 }
 
 interface MenuProps : Props {
     var back: (Event) -> Unit
     var showSettings: (Event) -> Unit
-    var showNothing: (Event) -> Unit
     var showMultiplayerMenu: (Event) -> Unit
     var showMultiplayerSettings: (Event) -> Unit
     var startGame: (Event) -> Unit
-    var color: String
     var connectToGame: (String) -> Unit
 }
 
@@ -263,7 +282,7 @@ val Settings = fc<SettingsProps> { props ->
                     +"No edges"
                 }
                 option {
-                    attrs.value = "eges"
+                    attrs.value = "edges"
                     +"Edges"
                 }
                 option {

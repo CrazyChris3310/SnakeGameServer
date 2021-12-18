@@ -22,24 +22,13 @@ interface GameEngine {
 class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 
     private val food = Food()
-    private val snake = Snake(color, DEFAULT_SPEED)
-    private val scope = MainScope()
-    private var timer: Job? = null
+    private val snake = Snake(color.substring(1), DEFAULT_SPEED)
+    private var timer: Int? = null
 
     constructor(color: String, map: String) : this(color, defineMap(map))
 
     override fun startGame() {
-        timer = scope.launch(Dispatchers.Default) {
-            try {
-                while (isActive) {
-                    delay(10)
-                    step()
-                }
-            } finally {
-                console.log("game truly stopped")
-            }
-        }
-        console.log("timer started")
+       timer = window.setInterval(::step, 10)
     }
 
     private fun step() {
@@ -75,16 +64,15 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
         val ctx = getCanvasContext()
         clearCanvas(ctx)
         for (point in points) {
-            paint(point.x, point.y, point.color, ctx)
+            paint(point.x, point.y, "#${point.color}", ctx)
         }
     }
 
     override fun stopGame() {
-        timer?.cancel() ?: console.log("error")
-        console.log("closed")
-        console.log(timer)
-        console.log(timer?.isActive)
-        clearCanvas(getCanvasContext())
+        if (timer != null) {
+            window.clearInterval(timer!!)
+            clearCanvas(getCanvasContext())
+        }
     }
 
     override fun changeDirection(direction: String) {

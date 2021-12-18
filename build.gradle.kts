@@ -75,6 +75,7 @@ plugins {
     kotlin("multiplatform") version "1.6.0"
     application //to run JVM part
     kotlin("plugin.serialization") version "1.6.0"
+    idea
 }
 
 group = "org.example"
@@ -82,6 +83,12 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+idea {
+    module {
+        isDownloadJavadoc = true
+    }
 }
 
 kotlin {
