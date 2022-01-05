@@ -6,9 +6,17 @@ import com.example.model.Snake
 import com.example.utils.DEFAULT_SPEED
 import com.example.utils.Request
 import com.example.utils.Response
+import io.ktor.client.*
+import io.ktor.client.engine.js.*
+import io.ktor.client.features.websocket.*
+import io.ktor.http.*
+import io.ktor.http.cio.websocket.*
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.*
+import kotlinx.serialization.json.Json
+import org.w3c.dom.CloseEvent
+import org.w3c.dom.ErrorEvent
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
 import org.w3c.dom.events.Event
@@ -94,28 +102,30 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
     private var socket: WebSocket? = null
 
     override fun startGame() {
-        var url = "ws://${window.location.host}/games/snake/game";
+        var path = "ws://${window.location.host}/games/snake/game"
         if (roomId != "") {
-            url += "/$roomId"
+            path += "/$roomId"
         }
-        url += "?colorId=$color&mapName=$mapSelected"
+        path += "?colorId=$color&mapName=$mapSelected"
 
-        socket = WebSocket(url)
-
-        socket!!.onopen = { console.log("Connection is set!") }
-        socket!!.onclose = {
-            console.log("Socket closed")
+        this.socket = WebSocket(path)
+        this.socket!!.onopen = { console.log("Connection is set!") }
+        this.socket!!.onclose = { e ->
+            val event = e as CloseEvent
+            if (event.wasClean) {
+                console.log("Clean closed")
+            } else {
+                console.log("Connection reset")
+            }
+            console.log("Error code: " + event.code + ", reason: " + event.reason)
         }
 
-        socket!!.onmessage = { event: MessageEvent ->
-            {
-                val room = event.data.toString()
-                try {
-                    room.toInt()
-                } catch (e: NumberFormatException) {
-                    document.querySelector(".temp")?.innerHTML = "Room ID <br> $room"
-                }
-                val response = JSON.parse<Response>(event.data.toString())
+        this.socket!!.onmessage = { event ->
+            val receivedText = event.data.toString()
+            try {
+                receivedText.toInt()
+            } catch (e: Exception) {
+                val response = Json.decodeFromString(Response.serializer(), receivedText)
                 val points = response.points
                 val ctx = getCanvasContext()
                 clearCanvas(ctx)
@@ -125,13 +135,15 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
             }
         }
 
-        socket!!.onerror = { event: Event ->
-            console.log("Error: $event")
+        this.socket!!.onerror = { e ->
+            val event = e as ErrorEvent
+            console.log("Error" + event.message)
         }
     }
 
     override fun stopGame() {
         socket!!.close()
+        console.log("socket closed")
         clearCanvas(getCanvasContext())
     }
 
@@ -143,7 +155,7 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
             "LEFT" -> Direction.LEFT
             else -> return
         }
-        val request = JSON.stringify(Request(dir))
+        val request = Json.encodeToString(Request.serializer(), Request(dir))
         socket!!.send(request)
     }
 }

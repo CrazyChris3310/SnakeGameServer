@@ -1,9 +1,7 @@
 import kotlinx.browser.document
 import kotlinx.html.InputType
-import kotlinx.html.div
 import kotlinx.html.id
 import kotlinx.html.js.onClickFunction
-import kotlinx.html.style
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLSelectElement
@@ -11,12 +9,14 @@ import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
 import react.*
 import react.dom.*
-import kotlin.jvm.Volatile
+import GamePanel.*;
+import com.example.maps.GameMap
+import react.dom.events.ChangeEvent
 
 interface AppState : State {
     var color: String
     var map: String
-    var panel: String
+    var panel: GamePanel
     var gameEngine: GameEngine
 }
 
@@ -24,7 +24,7 @@ class Application : RComponent<Props, AppState>() {
 
     init {
         state.color = getRandomColor()
-        state.panel = "mainMenu"
+        state.panel = MAIN_MENU
         state.map = "free"
     }
 
@@ -40,12 +40,12 @@ class Application : RComponent<Props, AppState>() {
 
     private fun keyActionListener(event: Event) {
         val key = event as KeyboardEvent
-        if (state.panel == "none") {
+        if (state.panel == NONE) {
             when (key.code) {
                 "Escape" -> {
                     state.gameEngine.stopGame()
                     setState {
-                        panel = "mainMenu"
+                        panel = MAIN_MENU
                     }
                 }
                 "ArrowUp" -> state.gameEngine.changeDirection("UP")
@@ -56,7 +56,7 @@ class Application : RComponent<Props, AppState>() {
 
         } else {
             when (key.code) {
-                "Escape" -> setState { panel = "mainMenu" }
+                "Escape" -> setState { panel = MAIN_MENU }
             }
         }
     }
@@ -69,6 +69,18 @@ class Application : RComponent<Props, AppState>() {
         }
     }
 
+    private fun beginGame(settings: GameSettings) {
+        setState {
+            panel = NONE
+            gameEngine = if (settings.single) {
+                            SingleGameEngine(color, map)
+                        } else {
+                            NetworkGameEngine(color, settings.map, settings.roomId)
+                        }
+            gameEngine.startGame()
+        }
+    }
+
     override fun RBuilder.render() {
         div {
             div(classes = "game-field-wrapper") {
@@ -78,56 +90,33 @@ class Application : RComponent<Props, AppState>() {
                 }
             }
             when (state.panel) {
-                "mainMenu" -> child(MainMenu) {
+                MAIN_MENU -> child(MainMenu) {
                     attrs {
-                        startGame = {
-                            setState {
-                                map = state.map
-                                panel = "none"
-                                gameEngine = SingleGameEngine(color, map)
-                                color = state.color
-
-                                gameEngine.startGame()
-                            }
-                        }
-                        showMultiplayerMenu = { setState { panel = "multiplayerMenu" } }
-                        showSettings = { setState { panel = "settings" } }
+                        startGame = ::beginGame
+                        showMultiplayerMenu = { setState { panel = MULTIPLAYER_MENU } }
+                        showSettings = { setState { panel = SETTINGS } }
                     }
                 }
-                "settings" -> child(Settings) {
+                SETTINGS -> child(Settings) {
                     attrs.color = state.color
                     attrs.map = state.map
                     attrs.save = ::updateSettings
-                    attrs.back = { setState { panel = "mainMenu" } }
+                    attrs.back = { setState { panel = MAIN_MENU } }
                 }
-                "multiplayerMenu" -> child(MultiplayerMenu) {
+                MULTIPLAYER_MENU -> child(MultiplayerMenu) {
                     attrs {
-                        connectToGame = { roomId ->
-                            setState {
-                                panel = "none"
-                                gameEngine = NetworkGameEngine(color, map, roomId)
-
-                                state.gameEngine.startGame()
-                            }
-                        }
-                        showMultiplayerSettings = { setState { panel = "multiplayerSettings" } }
-                        back = { setState { panel = "mainMenu" } }
+                        startGame = ::beginGame
+                        showMultiplayerSettings = { setState { panel = MULTIPLAYER_SETTINGS } }
+                        back = { setState { panel = MAIN_MENU } }
                     }
                 }
-                "multiplayerSettings" -> child(MultiplayerSettings) {
+                MULTIPLAYER_SETTINGS -> child(MultiplayerSettings) {
                     attrs {
-                        startGame = {
-                            setState {
-                                panel = "none"
-                                gameEngine = SingleGameEngine(color, map)
-
-                                state.gameEngine.startGame()
-                            }
-                        }
-                        back = { setState { panel = "multiplayerMenu" } }
+                        startGame = ::beginGame
+                        back = { setState { panel = MULTIPLAYER_MENU } }
                     }
                 }
-                "none" -> div {}
+                NONE -> div {}
             }
 
         }
@@ -140,8 +129,7 @@ interface MenuProps : Props {
     var showSettings: (Event) -> Unit
     var showMultiplayerMenu: (Event) -> Unit
     var showMultiplayerSettings: (Event) -> Unit
-    var startGame: (Event) -> Unit
-    var connectToGame: (String) -> Unit
+    var startGame: (GameSettings) -> Unit
 }
 
 interface SettingsProps : Props {
@@ -155,7 +143,7 @@ val MainMenu = fc<MenuProps> { props ->
     div(classes = "menu") {
         input(type = InputType.button, classes = "menu-button") {
             attrs.value = "Start SinglePlayer"
-            attrs.onClickFunction = props.startGame
+            attrs.onClickFunction = { props.startGame(GameSettings(single = true)) }
         }
         input(type = InputType.button, classes = "menu-button") {
             attrs.value = "Start MultiPlayer"
@@ -169,17 +157,19 @@ val MainMenu = fc<MenuProps> { props ->
 }
 
 val MultiplayerMenu = fc<MenuProps> { props ->
+    val (roomId, setRoomId) = useState("")
     div(classes = "menu") {
         div(classes = "menu-row") {
             input(type = InputType.text, classes = "menu-input") {
                 attrs {
                     id = "room-id"
                     placeholder = "Room ID"
+                    onChange = { event -> setRoomId((event.target as HTMLInputElement).value) }
                 }
             }
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "Connect"
-                attrs.onClickFunction = props.startGame
+                attrs.onClickFunction = { props.startGame(GameSettings(single = false, roomId = roomId)) }
             }
         }
         input(type = InputType.button, classes = "menu-button") {
@@ -202,41 +192,12 @@ val MultiplayerSettings = fc<MenuProps> { props ->
     val (map, setMap) = useState("free")
 
     div(classes = "menu") {
-        div(classes = "menu-row") {
-            label{
-                attrs.htmlFor = "map-chooser"
-                +"Select a map: "
-            }
-            select {
-                attrs {
-                    id = "map-chooser"
-                    value = map
-                    onChange = { str ->
-                        setMap((str.target as HTMLSelectElement).value)
-                    }
-                }
-                option {
-                    attrs.value = "free"
-                    +"No edges"
-                }
-                option {
-                    attrs.value = "eges"
-                    +"Edges"
-                }
-                option {
-                    attrs.value = "tunnel"
-                    +"Tunnel"
-                }
-                option {
-                    attrs.value = "apartment"
-                    +"Apartment"
-                }
-            }
-        }
+        mapSelector(map) { str -> setMap(str) }
+
         div(classes = "final-buttons") {
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "Start game"
-                attrs.onClickFunction = props.startGame
+                attrs.onClickFunction =  { props.startGame(GameSettings(single = false, map = map)) }
             }
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "back"
@@ -264,37 +225,8 @@ val Settings = fc<SettingsProps> { props ->
                 }
             }
         }
-        div(classes = "menu-row") {
-            label{
-                attrs.htmlFor = "map-chooser"
-                +"Select a map: "
-            }
-            select {
-                attrs {
-                    id = "map-chooser"
-                    value = map
-                    onChange = { str ->
-                        setMap((str.target as HTMLSelectElement).value)
-                    }
-                }
-                option {
-                    attrs.value = "free"
-                    +"No edges"
-                }
-                option {
-                    attrs.value = "edges"
-                    +"Edges"
-                }
-                option {
-                    attrs.value = "tunnel"
-                    +"Tunnel"
-                }
-                option {
-                    attrs.value = "apartment"
-                    +"Apartment"
-                }
-            }
-        }
+        mapSelector(map) { str -> setMap(str) }
+
         div(classes = "final-buttons") {
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "Save"
@@ -305,6 +237,40 @@ val Settings = fc<SettingsProps> { props ->
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "back"
                 attrs.onClickFunction = props.back
+            }
+        }
+    }
+}
+
+fun RBuilder.mapSelector(map: String, setMap: (String) -> Unit) {
+    div(classes = "menu-row") {
+        label{
+            attrs.htmlFor = "map-chooser"
+            +"Select a map: "
+        }
+        select {
+            attrs {
+                id = "map-chooser"
+                value = map
+                onChange = { event ->
+                    setMap((event.target as HTMLSelectElement).value)
+                }
+            }
+            option {
+                attrs.value = "free"
+                +"No edges"
+            }
+            option {
+                attrs.value = "edges"
+                +"Edges"
+            }
+            option {
+                attrs.value = "tunnel"
+                +"Tunnel"
+            }
+            option {
+                attrs.value = "apartment"
+                +"Apartment"
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.example.controllers
 
-import com.example.maps.GameMap
+import com.example.maps.*
 import com.example.model.Direction
 import com.example.model.Food
 import com.example.model.Point
@@ -8,9 +8,9 @@ import com.example.model.Snake
 import com.example.utils.Connection
 import com.example.utils.Response
 import com.example.utils.TICK_LENGTH
-import com.google.gson.Gson
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.json.Json
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
@@ -21,10 +21,10 @@ class GameController(mapName: String?) {
     val lock = ReentrantReadWriteLock()
     private val snakes = Collections.synchronizedSet<Connection?>(HashSet())
     private val currentMap: GameMap = when (mapName) {
-        "edges" -> com.example.maps.EdgesMap()
-        "tunnel" -> com.example.maps.TunnelMap()
-        "apartment" -> com.example.maps.ApartmentMap()
-        else -> com.example.maps.FreeMap()
+        "edges" -> EdgesMap()
+        "tunnel" -> TunnelMap()
+        "apartment" -> ApartmentMap()
+        else -> FreeMap()
     }
 
     suspend fun startGame() {
@@ -141,8 +141,7 @@ class GameController(mapName: String?) {
     }
 
     private suspend fun broadcast(response: Response) {
-        val gson = Gson()
-        val jsonResponse = gson.toJson(response)
+        val jsonResponse = Json.encodeToString(Response.serializer(), response)
         for (connection in snakes) {
             connection.session.send(jsonResponse)
         }

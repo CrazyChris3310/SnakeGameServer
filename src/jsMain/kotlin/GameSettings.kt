@@ -1,0 +1,1 @@
+class GameSettings(val single: Boolean = true, val roomId: String = "", val map: String = "free")

@@ -1,0 +1,7 @@
+enum class GamePanel {
+    MAIN_MENU,
+    MULTIPLAYER_MENU,
+    MULTIPLAYER_SETTINGS,
+    SETTINGS,
+    NONE
+}

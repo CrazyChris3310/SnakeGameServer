@@ -12,6 +12,8 @@ import io.ktor.http.content.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromString
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -76,7 +78,8 @@ fun Application.snakeModule() {
                 for(frame in incoming) {
                     frame as? Frame.Text ?: continue
                     val receivedText = frame.readText()
-                    val request = gson.fromJson(receivedText, Request::class.java)
+                    val request = Json.decodeFromString<Request>(receivedText)
+//                    val request = gson.fromJson(receivedText, Request::class.java)
                     controller.updateDirection(this, request.direction)
                 }
             } catch (e: Exception) {
