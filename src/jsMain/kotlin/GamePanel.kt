@@ -3,5 +3,6 @@ enum class GamePanel {
     MULTIPLAYER_MENU,
     MULTIPLAYER_SETTINGS,
     SETTINGS,
-    NONE
+    NONE,
+    LOADER
 }

@@ -20,9 +20,10 @@ import org.w3c.dom.ErrorEvent
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
 import org.w3c.dom.events.Event
+import kotlin.js.Promise
 
 interface GameEngine {
-    fun startGame()
+    fun startGame(): Promise<Boolean>
     fun stopGame()
     fun changeDirection(direction: String)
 }
@@ -35,8 +36,11 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 
     constructor(color: String, map: String) : this(color, defineMap(map))
 
-    override fun startGame() {
+    override fun startGame(): Promise<Boolean> {
        timer = window.setInterval(::step, 10)
+        return Promise{ resolve, _ ->
+            resolve(true)
+        }
     }
 
     private fun step() {
@@ -96,48 +100,57 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 
 }
 
-class NetworkGameEngine(color: String, private val mapSelected: String = "free", private val roomId: String = "") : GameEngine {
+class NetworkGameEngine(color: String, private val mapSelected: String = "free",
+                        private val roomId: String = "") : GameEngine {
 
     private val color = color.substring(1)
     private var socket: WebSocket? = null
 
-    override fun startGame() {
+    override fun startGame(): Promise<Boolean> {
         var path = "ws://${window.location.host}/games/snake/game"
         if (roomId != "") {
             path += "/$roomId"
         }
         path += "?colorId=$color&mapName=$mapSelected"
 
-        this.socket = WebSocket(path)
-        this.socket!!.onopen = { console.log("Connection is set!") }
-        this.socket!!.onclose = { e ->
-            val event = e as CloseEvent
-            if (event.wasClean) {
-                console.log("Clean closed")
-            } else {
-                console.log("Connection reset")
-            }
-            console.log("Error code: " + event.code + ", reason: " + event.reason)
-        }
+        return Promise{ resolve, reject ->
+            this.socket = WebSocket(path)
 
-        this.socket!!.onmessage = { event ->
-            val receivedText = event.data.toString()
-            try {
-                receivedText.toInt()
-            } catch (e: Exception) {
-                val response = Json.decodeFromString(Response.serializer(), receivedText)
-                val points = response.points
-                val ctx = getCanvasContext()
-                clearCanvas(ctx)
-                for (point in points) {
-                    paint(point.x, point.y, "#${point.color}", ctx)
+            this.socket!!.onopen = {
+                console.log("Connection is set!")
+                resolve(true)
+            }
+            this.socket!!.onclose = { e ->
+                val event = e as CloseEvent
+                if (event.wasClean) {
+                    console.log("Clean closed")
+                } else {
+                    console.log("Connection reset")
+                    reject(Throwable("Troubles with connection"))
+                }
+                console.log("Error code: " + event.code + ", reason: " + event.reason)
+            }
+
+            this.socket!!.onmessage = { event ->
+                val receivedText = event.data.toString()
+                try {
+                    receivedText.toInt()
+                } catch (e: Exception) {
+                    val response = Json.decodeFromString(Response.serializer(), receivedText)
+                    val points = response.points
+                    val ctx = getCanvasContext()
+                    clearCanvas(ctx)
+                    for (point in points) {
+                        paint(point.x, point.y, "#${point.color}", ctx)
+                    }
                 }
             }
-        }
 
-        this.socket!!.onerror = { e ->
-            val event = e as ErrorEvent
-            console.log("Error" + event.message)
+            this.socket!!.onerror = { e ->
+                val event = e as ErrorEvent
+                console.log("Error" + event.message)
+                reject(Throwable("Troubles with connection"))
+            }
         }
     }
 

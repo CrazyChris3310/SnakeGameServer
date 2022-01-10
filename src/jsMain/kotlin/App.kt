@@ -10,8 +10,8 @@ import org.w3c.dom.events.KeyboardEvent
 import react.*
 import react.dom.*
 import GamePanel.*;
-import com.example.maps.GameMap
-import react.dom.events.ChangeEvent
+import kotlinx.browser.window
+import kotlinx.coroutines.await
 
 interface AppState : State {
     var color: String
@@ -71,13 +71,22 @@ class Application : RComponent<Props, AppState>() {
 
     private fun beginGame(settings: GameSettings) {
         setState {
-            panel = NONE
+            panel = LOADER
             gameEngine = if (settings.single) {
                             SingleGameEngine(color, map)
                         } else {
                             NetworkGameEngine(color, settings.map, settings.roomId)
                         }
-            gameEngine.startGame()
+            gameEngine.startGame().then {
+                this@Application.setState {
+                    panel = NONE
+                }
+            }.catch { error ->
+                console.log(error.message)
+                this@Application.setState {
+                    panel = MAIN_MENU
+                }
+            }
         }
     }
 
@@ -117,6 +126,7 @@ class Application : RComponent<Props, AppState>() {
                     }
                 }
                 NONE -> div {}
+                LOADER -> div(classes = "loader") {}
             }
 
         }
