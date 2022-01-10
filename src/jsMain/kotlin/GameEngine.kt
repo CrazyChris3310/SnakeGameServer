@@ -6,24 +6,15 @@ import com.example.model.Snake
 import com.example.utils.DEFAULT_SPEED
 import com.example.utils.Request
 import com.example.utils.Response
-import io.ktor.client.*
-import io.ktor.client.engine.js.*
-import io.ktor.client.features.websocket.*
-import io.ktor.http.*
-import io.ktor.http.cio.websocket.*
-import kotlinx.browser.document
 import kotlinx.browser.window
-import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import org.w3c.dom.CloseEvent
 import org.w3c.dom.ErrorEvent
-import org.w3c.dom.MessageEvent
 import org.w3c.dom.WebSocket
-import org.w3c.dom.events.Event
 import kotlin.js.Promise
 
 interface GameEngine {
-    fun startGame(): Promise<Boolean>
+    fun startGame(): Promise<String?>
     fun stopGame()
     fun changeDirection(direction: String)
 }
@@ -36,10 +27,10 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 
     constructor(color: String, map: String) : this(color, defineMap(map))
 
-    override fun startGame(): Promise<Boolean> {
+    override fun startGame(): Promise<String?> {
        timer = window.setInterval(::step, 10)
         return Promise{ resolve, _ ->
-            resolve(true)
+            resolve(null)
         }
     }
 
@@ -106,7 +97,7 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
     private val color = color.substring(1)
     private var socket: WebSocket? = null
 
-    override fun startGame(): Promise<Boolean> {
+    override fun startGame(): Promise<String> {
         var path = "ws://${window.location.host}/games/snake/game"
         if (roomId != "") {
             path += "/$roomId"
@@ -118,7 +109,6 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
 
             this.socket!!.onopen = {
                 console.log("Connection is set!")
-                resolve(true)
             }
             this.socket!!.onclose = { e ->
                 val event = e as CloseEvent
@@ -135,6 +125,7 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
                 val receivedText = event.data.toString()
                 try {
                     receivedText.toInt()
+                    resolve(receivedText)
                 } catch (e: Exception) {
                     val response = Json.decodeFromString(Response.serializer(), receivedText)
                     val points = response.points
@@ -149,7 +140,7 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
             this.socket!!.onerror = { e ->
                 val event = e as ErrorEvent
                 console.log("Error" + event.message)
-                reject(Throwable("Troubles with connection"))
+                reject(Throwable("Error happened. ${e.message}"))
             }
         }
     }

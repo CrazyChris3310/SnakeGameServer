@@ -4,7 +4,6 @@ import com.example.controllers.GameController
 import com.example.model.Snake
 import com.example.utils.DEFAULT_SPEED
 import com.example.utils.Request
-import com.google.gson.Gson
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
@@ -12,10 +11,9 @@ import io.ktor.http.content.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import java.util.*
-import kotlin.collections.HashMap
 
 var maxRoomId = 0
 
@@ -66,8 +64,6 @@ fun Application.snakeModule() {
                 return@webSocket
             }
 
-            val gson = Gson()
-
             send(roomId)
 
             controller.startGame()
@@ -79,7 +75,6 @@ fun Application.snakeModule() {
                     frame as? Frame.Text ?: continue
                     val receivedText = frame.readText()
                     val request = Json.decodeFromString<Request>(receivedText)
-//                    val request = gson.fromJson(receivedText, Request::class.java)
                     controller.updateDirection(this, request.direction)
                 }
             } catch (e: Exception) {

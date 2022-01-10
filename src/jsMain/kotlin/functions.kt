@@ -4,10 +4,8 @@ import com.example.utils.FIELD_HEIGHT
 import com.example.utils.FIELD_WIDTH
 import com.example.utils.randomInt
 import kotlinx.browser.document
-import kotlinx.html.CANVAS
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
-import org.w3c.dom.RenderingContext
 
 fun getCanvasContext(): CanvasRenderingContext2D {
     val canvas = document.querySelector(".game-field") as HTMLCanvasElement

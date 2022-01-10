@@ -1,23 +1,28 @@
+import GamePanel.*
 import kotlinx.browser.document
+import kotlinx.browser.window
+import kotlinx.css.Color
+import kotlinx.css.borderColor
 import kotlinx.html.InputType
+import kotlinx.html.classes
 import kotlinx.html.id
 import kotlinx.html.js.onClickFunction
-import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLSelectElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
 import react.*
 import react.dom.*
-import GamePanel.*;
-import kotlinx.browser.window
-import kotlinx.coroutines.await
+import styled.css
+import styled.styledDiv
 
 interface AppState : State {
     var color: String
     var map: String
     var panel: GamePanel
     var gameEngine: GameEngine
+    var roomId: String
+    var isConnected: Boolean
 }
 
 class Application : RComponent<Props, AppState>() {
@@ -26,11 +31,12 @@ class Application : RComponent<Props, AppState>() {
         state.color = getRandomColor()
         state.panel = MAIN_MENU
         state.map = "free"
+        state.isConnected = false
+        state.roomId = ""
     }
 
     override fun componentDidMount() {
         document.addEventListener("keydown", ::keyActionListener)
-        (document.querySelector(".game-field-wrapper") as HTMLDivElement).style.borderColor = state.color
     }
 
     override fun componentWillUnmount() {
@@ -46,6 +52,7 @@ class Application : RComponent<Props, AppState>() {
                     state.gameEngine.stopGame()
                     setState {
                         panel = MAIN_MENU
+                        isConnected = false
                     }
                 }
                 "ArrowUp" -> state.gameEngine.changeDirection("UP")
@@ -56,7 +63,10 @@ class Application : RComponent<Props, AppState>() {
 
         } else {
             when (key.code) {
-                "Escape" -> setState { panel = MAIN_MENU }
+                "Escape" -> setState {
+                    panel = MAIN_MENU
+                    isConnected = false
+                }
             }
         }
     }
@@ -65,7 +75,6 @@ class Application : RComponent<Props, AppState>() {
         setState {
             map = newMap
             color = newColor
-            (document.querySelector(".game-field-wrapper") as HTMLDivElement).style.borderColor = color
         }
     }
 
@@ -77,22 +86,34 @@ class Application : RComponent<Props, AppState>() {
                         } else {
                             NetworkGameEngine(color, settings.map, settings.roomId)
                         }
-            gameEngine.startGame().then {
+            gameEngine.startGame().then { value ->
                 this@Application.setState {
+                    if (value == null) {
+                        isConnected = false
+                    } else {
+                        isConnected = true
+                        roomId = value
+                    }
                     panel = NONE
                 }
             }.catch { error ->
                 console.log(error.message)
                 this@Application.setState {
                     panel = MAIN_MENU
+                    isConnected = false
                 }
+                window.alert(error.message ?: "Error happened")
             }
         }
     }
 
     override fun RBuilder.render() {
-        div {
-            div(classes = "game-field-wrapper") {
+        div(classes = "ui-wrapper") {
+            styledDiv {
+                attrs.classes = setOf("game-field-wrapper")
+                css {
+                    borderColor = Color(state.color)
+                }
                 canvas(classes = "game-field") {
                     attrs.width = "1200"
                     attrs.height = "680"
@@ -128,7 +149,14 @@ class Application : RComponent<Props, AppState>() {
                 NONE -> div {}
                 LOADER -> div(classes = "loader") {}
             }
-
+            div {
+                attrs.id = "room-id"
+                if (state.isConnected) {
+                    +"Room Id:"
+                    br {}
+                    +state.roomId
+                }
+            }
         }
     }
 
@@ -258,7 +286,7 @@ fun RBuilder.mapSelector(map: String, setMap: (String) -> Unit) {
             attrs.htmlFor = "map-chooser"
             +"Select a map: "
         }
-        select {
+        select(classes = "selector") {
             attrs {
                 id = "map-chooser"
                 value = map

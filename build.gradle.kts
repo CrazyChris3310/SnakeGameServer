@@ -72,6 +72,8 @@ kotlin {
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:$reactVersion")
                 implementation(npm("react", "17.0.2"))
                 implementation(npm("react-dom", "17.0.2"))
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.3-pre.289-kotlin-1.6.10")
+
 
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
             }
