@@ -1,5 +1,6 @@
 package com.example.model
 
+import com.example.model.food.Food
 import com.example.utils.*
 
 class Snake(val color: String, speed: Int) {
@@ -59,6 +60,24 @@ class Snake(val color: String, speed: Int) {
             newCords.second - dir.verticalKey * ELEMENT_SIZE
         )
         snake.add(SnakeElement(newCords, dir))
+    }
+
+    fun eat(food: Food) {
+        if (food.kills) {
+            reborn()
+            return
+        }
+        for (i in 0 until food.lengthAdd) {
+            var newCords = snake.last().getCords()
+            val dir = snake.last().direction
+            newCords = Pair(
+                newCords.first - dir.horizontalKey * ELEMENT_SIZE,
+                newCords.second - dir.verticalKey * ELEMENT_SIZE
+            )
+            snake.add(SnakeElement(newCords, dir))
+        }
+        if (speed > 10)
+            speed -= food.speedAdd
     }
 
     fun updateCords() {

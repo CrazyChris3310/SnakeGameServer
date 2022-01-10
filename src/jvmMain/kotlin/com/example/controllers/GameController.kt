@@ -2,21 +2,21 @@ package com.example.controllers
 
 import com.example.maps.*
 import com.example.model.Direction
-import com.example.model.Food
 import com.example.model.Point
 import com.example.model.Snake
+import com.example.model.food.Apple
+import com.example.model.food.Food
 import com.example.utils.Connection
 import com.example.utils.Response
 import com.example.utils.TICK_LENGTH
 import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class GameController(mapName: String?) {
 
-    private val food = Food()
     private var timer = Timer()
     val lock = ReentrantReadWriteLock()
     private val snakes = Collections.synchronizedSet<Connection?>(HashSet())
@@ -26,12 +26,13 @@ class GameController(mapName: String?) {
         "apartment" -> ApartmentMap()
         else -> FreeMap()
     }
+    private var food: Food = Apple(currentMap.edges)
 
     suspend fun startGame() {
         if (snakes.isNotEmpty())
             return
 
-        food.newCords()
+        food = Apple(currentMap.edges)
 
         println("Scheduling timer")
         timer = Timer()
@@ -93,11 +94,11 @@ class GameController(mapName: String?) {
         if (snakes.isNotEmpty()) {
             snakes.map{ it.snake }.forEach { it ->
                 if (it.intersects(food.cords)) {
-                    food.newCords(currentMap.edges)
-                    it.grow()
+                    it.eat(food)
                     if (it.speed > 10 && it.getSize() % 10 == 0) {
                         it.speed -= 10
                     }
+                    food = Apple(currentMap.edges)
                 }
 
                 var fail = false
@@ -130,13 +131,12 @@ class GameController(mapName: String?) {
                 }
             }
         }
-        points.add(Point(food.cords, food.color))
 
         for (point in currentMap.edges) {
             points.add(Point(point, currentMap.color))
         }
 
-        val response = Response(points)
+        val response = Response(points, Point(food.cords, points[0].color))
         broadcast(response)
     }
 

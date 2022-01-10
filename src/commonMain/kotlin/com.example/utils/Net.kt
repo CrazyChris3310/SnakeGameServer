@@ -8,4 +8,4 @@ import kotlinx.serialization.Serializable
 data class Request(val direction: Direction)
 
 @Serializable
-data class Response(var points: List<Point>)
+data class Response(var points: List<Point>, var food: Point)

@@ -1,8 +1,9 @@
 import com.example.maps.GameMap
 import com.example.model.Direction
-import com.example.model.Food
 import com.example.model.Point
 import com.example.model.Snake
+import com.example.model.food.Apple
+import com.example.model.food.Food
 import com.example.utils.DEFAULT_SPEED
 import com.example.utils.Request
 import com.example.utils.Response
@@ -21,7 +22,7 @@ interface GameEngine {
 
 class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 
-    private val food = Food()
+    private var food: Food = Apple(map.edges)
     private val snake = Snake(color.substring(1), DEFAULT_SPEED)
     private var timer: Int? = null
 
@@ -37,11 +38,11 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
     private fun step() {
         val points = ArrayList<Point>()
         if (snake.intersects(food.cords)) {
-            food.newCords(map.edges)
-            snake.grow()
+            snake.eat(food)
             if (snake.speed > 10 && snake.getSize() % 10 == 0) {
                 snake.speed -= 10
             }
+            food = Apple()
         }
 
         if (snake.intersectsItself())
@@ -62,13 +63,12 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
             points.add(Point(point, map.color))
         }
 
-        points.add(Point(food.cords, food.color))
-
         val ctx = getCanvasContext()
         clearCanvas(ctx)
         for (point in points) {
             paint(point.x, point.y, "#${point.color}", ctx)
         }
+        paintFood(food.cords.first, food.cords.second, ctx)
     }
 
     override fun stopGame() {
@@ -134,6 +134,8 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
                     for (point in points) {
                         paint(point.x, point.y, "#${point.color}", ctx)
                     }
+                    val food = response.food
+                    paintFood(food.x, food.y, ctx)
                 }
             }
 
