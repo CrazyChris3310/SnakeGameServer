@@ -51,7 +51,8 @@ fun Application.snakeModule() {
             val controller: GameController?
             if (roomId == null) {
                 val mapName = call.request.queryParameters["mapName"]
-                controller = GameController(mapName)
+                val gameModeName = call.request.queryParameters["gameMode"]
+                controller = GameController(mapName, gameModeName)
                 rooms.putIfAbsent(maxRoomId.toString(), controller)
                 roomId = maxRoomId.toString()
                 maxRoomId += 1
@@ -79,6 +80,7 @@ fun Application.snakeModule() {
                 }
             } catch (e: Exception) {
                 println(e.localizedMessage)
+                e.printStackTrace()
             } finally {
                 controller.removeSnake(this)
                 val isRoomFinished = controller.tryStopTimer()

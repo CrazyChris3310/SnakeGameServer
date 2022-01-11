@@ -21,6 +21,7 @@ interface AppState : State {
     var map: String
     var panel: GamePanel
     var gameEngine: GameEngine
+    var gameMode: String
     var roomId: String
     var isConnected: Boolean
 }
@@ -33,6 +34,7 @@ class Application : RComponent<Props, AppState>() {
         state.map = "free"
         state.isConnected = false
         state.roomId = ""
+        state.gameMode = "default"
     }
 
     override fun componentDidMount() {
@@ -71,10 +73,11 @@ class Application : RComponent<Props, AppState>() {
         }
     }
 
-    private fun updateSettings(newColor: String, newMap: String) {
+    private fun updateSettings(newColor: String, newMap: String, newGameMode: String) {
         setState {
             map = newMap
             color = newColor
+            gameMode = newGameMode
         }
     }
 
@@ -82,9 +85,9 @@ class Application : RComponent<Props, AppState>() {
         setState {
             panel = LOADER
             gameEngine = if (settings.single) {
-                            SingleGameEngine(color, map)
+                            SingleGameEngine(color, map, gameMode)
                         } else {
-                            NetworkGameEngine(color, settings.map, settings.roomId)
+                            NetworkGameEngine(color, settings.map, settings.roomId, settings.gameMode)
                         }
             gameEngine.startGame().then { value ->
                 this@Application.setState {
@@ -130,6 +133,7 @@ class Application : RComponent<Props, AppState>() {
                 SETTINGS -> child(Settings) {
                     attrs.color = state.color
                     attrs.map = state.map
+                    attrs.gameMode = state.gameMode
                     attrs.save = ::updateSettings
                     attrs.back = { setState { panel = MAIN_MENU } }
                 }
@@ -172,9 +176,10 @@ interface MenuProps : Props {
 
 interface SettingsProps : Props {
     var back: (Event) -> Unit
-    var save: (String, String) -> Unit
+    var save: (String, String, String) -> Unit
     var color: String
     var map: String
+    var gameMode: String
 }
 
 val MainMenu = fc<MenuProps> { props ->
@@ -200,7 +205,7 @@ val MultiplayerMenu = fc<MenuProps> { props ->
         div(classes = "menu-row") {
             input(type = InputType.text, classes = "menu-input") {
                 attrs {
-                    id = "room-id"
+                    id = "room-id-input"
                     placeholder = "Room ID"
                     onChange = { event -> setRoomId((event.target as HTMLInputElement).value) }
                 }
@@ -228,14 +233,15 @@ val MultiplayerMenu = fc<MenuProps> { props ->
 
 val MultiplayerSettings = fc<MenuProps> { props ->
     val (map, setMap) = useState("free")
-
+    val (gameMode, setGameMode) = useState("default")
     div(classes = "menu") {
         mapSelector(map) { str -> setMap(str) }
+        gameModeSelector(gameMode) { str -> setGameMode(str)}
 
         div(classes = "final-buttons") {
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "Start game"
-                attrs.onClickFunction =  { props.startGame(GameSettings(single = false, map = map)) }
+                attrs.onClickFunction =  { props.startGame(GameSettings(single = false, map = map, gameMode = gameMode)) }
             }
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "back"
@@ -248,6 +254,7 @@ val MultiplayerSettings = fc<MenuProps> { props ->
 val Settings = fc<SettingsProps> { props ->
     val (color, setColor) = useState(props.color)
     val (map, setMap) = useState(props.map)
+    val (gameMode, setGameMode) = useState(props.gameMode)
 
     div(classes = "menu") {
         div(classes = "menu-row") {
@@ -264,12 +271,13 @@ val Settings = fc<SettingsProps> { props ->
             }
         }
         mapSelector(map) { str -> setMap(str) }
+        gameModeSelector(gameMode) { str -> setGameMode(str) }
 
         div(classes = "final-buttons") {
             input(type = InputType.button, classes = "menu-button") {
                 attrs.value = "Save"
                 attrs.onClickFunction = {
-                    props.save(color, map)
+                    props.save(color, map, gameMode)
                 }
             }
             input(type = InputType.button, classes = "menu-button") {
@@ -309,6 +317,36 @@ fun RBuilder.mapSelector(map: String, setMap: (String) -> Unit) {
             option {
                 attrs.value = "apartment"
                 +"Apartment"
+            }
+        }
+    }
+}
+
+fun RBuilder.gameModeSelector(mode: String, setMode: (String) -> Unit) {
+    div(classes = "menu-row") {
+        label{
+            attrs.htmlFor = "game-mode-chooser"
+            +"Select a game mode: "
+        }
+        select(classes = "selector") {
+            attrs {
+                id = "game-mode-chooser"
+                value = mode
+                onChange = { event ->
+                    setMode((event.target as HTMLSelectElement).value)
+                }
+            }
+            option {
+                attrs.value = "default"
+                +"Default"
+            }
+            option {
+                attrs.value = "diverseFood"
+                +"Diverse food"
+            }
+            option {
+                attrs.value = "randomSpeed"
+                +"Random speed"
             }
         }
     }

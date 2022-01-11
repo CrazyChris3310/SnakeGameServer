@@ -1,12 +1,10 @@
+import com.example.gameModes.GameMode
 import com.example.maps.GameMap
 import com.example.model.Direction
 import com.example.model.Point
 import com.example.model.Snake
-import com.example.model.food.Apple
-import com.example.model.food.Food
-import com.example.utils.DEFAULT_SPEED
-import com.example.utils.Request
-import com.example.utils.Response
+import com.example.model.food.FoodWrapper
+import com.example.utils.*
 import kotlinx.browser.window
 import kotlinx.serialization.json.Json
 import org.w3c.dom.CloseEvent
@@ -20,13 +18,17 @@ interface GameEngine {
     fun changeDirection(direction: String)
 }
 
-class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
+class SingleGameEngine(color: String, private val map: GameMap, private val gameMode: GameMode) : GameEngine {
 
-    private var food: Food = Apple(map.edges)
+    private var foods = mutableListOf(gameMode.spawnFood(map.edges))
     private val snake = Snake(color.substring(1), DEFAULT_SPEED)
     private var timer: Int? = null
 
-    constructor(color: String, map: String) : this(color, defineMap(map))
+    constructor(color: String, map: String, gameMode: String) : this(color, defineMap(map), defineGameMode(gameMode))
+
+    init {
+        gameMode.map = map
+    }
 
     override fun startGame(): Promise<String?> {
        timer = window.setInterval(::step, 10)
@@ -37,12 +39,9 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 
     private fun step() {
         val points = ArrayList<Point>()
-        if (snake.intersects(food.cords)) {
-            snake.eat(food)
-            if (snake.speed > 10 && snake.getSize() % 10 == 0) {
-                snake.speed -= 10
-            }
-            food = Apple()
+        if (snake.intersects(foods[0].cords)) {
+            snake.eat(foods[0])
+            foods[0] = gameMode.spawnFood(map.edges)
         }
 
         if (snake.intersectsItself())
@@ -53,6 +52,8 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 
         snake.updateDirection()
         snake.updateCords()
+
+        gameMode.apply(listOf(snake), foods)
 
         for (element in snake.snake) {
             val cords = element.getCords()
@@ -68,7 +69,7 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
         for (point in points) {
             paint(point.x, point.y, "#${point.color}", ctx)
         }
-        paintFood(food.cords.first, food.cords.second, ctx)
+        paintFood(FoodWrapper(foods[0]), ctx)
     }
 
     override fun stopGame() {
@@ -92,7 +93,7 @@ class SingleGameEngine(color: String, private val map: GameMap) : GameEngine {
 }
 
 class NetworkGameEngine(color: String, private val mapSelected: String = "free",
-                        private val roomId: String = "") : GameEngine {
+                        private val roomId: String = "", private val gameMode: String) : GameEngine {
 
     private val color = color.substring(1)
     private var socket: WebSocket? = null
@@ -102,7 +103,7 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
         if (roomId != "") {
             path += "/$roomId"
         }
-        path += "?colorId=$color&mapName=$mapSelected"
+        path += "?colorId=$color&mapName=$mapSelected&gameMode=$gameMode"
 
         return Promise{ resolve, reject ->
             this.socket = WebSocket(path)
@@ -134,8 +135,8 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
                     for (point in points) {
                         paint(point.x, point.y, "#${point.color}", ctx)
                     }
-                    val food = response.food
-                    paintFood(food.x, food.y, ctx)
+                    val food = response.foodWrapper
+                    paintFood(food, ctx)
                 }
             }
 
@@ -154,13 +155,7 @@ class NetworkGameEngine(color: String, private val mapSelected: String = "free",
     }
 
     override fun changeDirection(direction: String) {
-        val dir = when (direction) {
-            "UP" -> Direction.UP
-            "DOWN" -> Direction.DOWN
-            "RIGHT" -> Direction.RIGHT
-            "LEFT" -> Direction.LEFT
-            else -> return
-        }
+        val dir = defineDirection(direction) ?: return
         val request = Json.encodeToString(Request.serializer(), Request(dir))
         socket!!.send(request)
     }

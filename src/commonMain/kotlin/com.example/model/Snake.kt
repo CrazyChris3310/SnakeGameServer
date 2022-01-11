@@ -82,7 +82,7 @@ class Snake(val color: String, speed: Int) {
 
     fun updateCords() {
         count -= TICK_LENGTH.toInt()
-        if (count != 0) return
+        if (count > 0) return
         count = speed
 
         for (i in snake.size - 1 downTo 1) {

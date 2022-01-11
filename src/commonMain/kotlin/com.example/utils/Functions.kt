@@ -1,5 +1,10 @@
 package com.example.utils
 
+import com.example.gameModes.DefaultGameMode
+import com.example.gameModes.DiverseFoodGameMode
+import com.example.gameModes.GameMode
+import com.example.gameModes.RandomSpeedGameMode
+import com.example.maps.*
 import com.example.model.Direction
 
 const val FIELD_WIDTH = 1200
@@ -24,10 +29,31 @@ fun divideCords(first: Int, second: Int): Int {
     return first / ELEMENT_SIZE / second * ELEMENT_SIZE
 }
 
-fun convertDirection(direction: String): Direction? = when (direction) {
+fun randomSpeed(): Int {
+    var speed = randomInt(10, 100)
+    speed -= speed % 10
+    return speed
+}
+
+fun defineDirection(direction: String): Direction? = when (direction) {
     "UP" -> Direction.UP
     "DOWN" -> Direction.DOWN
     "RIGHT" -> Direction.RIGHT
     "LEFT" -> Direction.LEFT
     else -> null
+}
+
+fun defineMap(name: String?) : GameMap = when (name) {
+    "free" -> FreeMap()
+    "edges" -> EdgesMap()
+    "tunnel" -> TunnelMap()
+    "apartment" -> ApartmentMap()
+    else -> FreeMap()
+}
+
+fun defineGameMode(gameMode: String?) : GameMode = when (gameMode) {
+    "default" -> DefaultGameMode()
+    "diverseFood" -> DiverseFoodGameMode()
+    "randomSpeed" -> RandomSpeedGameMode()
+    else -> DefaultGameMode()
 }

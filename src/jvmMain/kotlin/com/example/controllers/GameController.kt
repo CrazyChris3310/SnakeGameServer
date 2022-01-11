@@ -1,38 +1,33 @@
 package com.example.controllers
 
-import com.example.maps.*
+import com.example.gameModes.GameMode
+import com.example.maps.GameMap
 import com.example.model.Direction
 import com.example.model.Point
 import com.example.model.Snake
-import com.example.model.food.Apple
 import com.example.model.food.Food
-import com.example.utils.Connection
-import com.example.utils.Response
-import com.example.utils.TICK_LENGTH
+import com.example.model.food.FoodWrapper
+import com.example.utils.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class GameController(mapName: String?) {
+class GameController(mapName: String?, gameMode: String?) {
 
     private var timer = Timer()
     val lock = ReentrantReadWriteLock()
     private val snakes = Collections.synchronizedSet<Connection?>(HashSet())
-    private val currentMap: GameMap = when (mapName) {
-        "edges" -> EdgesMap()
-        "tunnel" -> TunnelMap()
-        "apartment" -> ApartmentMap()
-        else -> FreeMap()
-    }
-    private var food: Food = Apple(currentMap.edges)
+    private val currentMap: GameMap = defineMap(mapName)
+    private val gameMode: GameMode = defineGameMode(gameMode)
+    private var foods = mutableListOf<Food>()
 
     suspend fun startGame() {
         if (snakes.isNotEmpty())
             return
 
-        food = Apple(currentMap.edges)
+        foods.add(gameMode.spawnFood(currentMap.edges))
 
         println("Scheduling timer")
         timer = Timer()
@@ -93,12 +88,9 @@ class GameController(mapName: String?) {
         val points = LinkedList<Point>()
         if (snakes.isNotEmpty()) {
             snakes.map{ it.snake }.forEach { it ->
-                if (it.intersects(food.cords)) {
-                    it.eat(food)
-                    if (it.speed > 10 && it.getSize() % 10 == 0) {
-                        it.speed -= 10
-                    }
-                    food = Apple(currentMap.edges)
+                if (it.intersects(foods[0].cords)) {
+                    it.eat(foods[0])
+                    foods[0] = gameMode.spawnFood(currentMap.edges)
                 }
 
                 var fail = false
@@ -130,13 +122,14 @@ class GameController(mapName: String?) {
                     points.add(Point(element.getCords(), it.color))
                 }
             }
+            gameMode.apply(snakes.map {it.snake}, foods)
         }
 
         for (point in currentMap.edges) {
             points.add(Point(point, currentMap.color))
         }
 
-        val response = Response(points, Point(food.cords, points[0].color))
+        val response = Response(points, FoodWrapper(foods[0]))
         broadcast(response)
     }
 
