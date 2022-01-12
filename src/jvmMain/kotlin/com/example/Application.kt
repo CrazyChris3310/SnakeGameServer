@@ -23,30 +23,21 @@ fun Application.snakeModule() {
     install(WebSockets)
     routing {
 
-        get("/temp") {
+        get("/") {
             call.respondText(
-                this::class.java.classLoader.getResource("webapp/temp.html")!!.readText(),
+                this::class.java.classLoader.getResource("index.html")!!.readText(),
                 ContentType.Text.Html
             )
         }
 
         static("/") {
             resources("")
-            resources("webapp")
-        }
-
-        static("/games") {
-            resources("webapp")
-        }
-
-        static("/snakegame") {
-            resources("newapp")
         }
 
         val rooms = Collections.synchronizedMap<String, GameController>(HashMap())
 
         webSocket("/games/snake/game/{roomId?}") {
-            log.info("User connected")
+            println("User connected")
             var roomId = call.parameters["roomId"]
             val controller: GameController?
             if (roomId == null) {
@@ -80,7 +71,6 @@ fun Application.snakeModule() {
                 }
             } catch (e: Exception) {
                 println(e.localizedMessage)
-                e.printStackTrace()
             } finally {
                 controller.removeSnake(this)
                 val isRoomFinished = controller.tryStopTimer()

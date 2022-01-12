@@ -94,7 +94,7 @@ tasks.getByName<Jar>("jvmJar") {
     } else {
         "jsBrowserDevelopmentWebpack"
     }
-    val webpackTask = tasks.getByName<KotlinWebpack>(taskName)
+    val webpackTask = tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack")
     dependsOn(webpackTask) // make sure JS gets compiled first
     from(File(webpackTask.destinationDirectory, webpackTask.outputFileName)) // bring output file along into the JAR
 }
